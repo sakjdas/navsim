@@ -1,8 +1,8 @@
-TEAM_NAME="MUST_SET"
-AUTHORS="MUST_SET"
-EMAIL="MUST_SET"
-INSTITUTION="MUST_SET"
-COUNTRY="MUST_SET"
+TEAM_NAME="SmallFish"
+AUTHORS="Hao"
+EMAIL="hao.guo@tum.de"
+INSTITUTION="TUM"
+COUNTRY="Germany"
 
 python $NAVSIM_DEVKIT_ROOT/navsim/planning/script/run_create_submission_pickle.py \
 agent=constant_velocity_agent \
