@@ -1,4 +1,4 @@
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Union
 from torch.optim import Optimizer
 from torch.optim.lr_scheduler import LRScheduler
 
@@ -109,5 +109,5 @@ class EgoStatusMLPAgent(AbstractAgent):
     ) -> torch.Tensor:
         return torch.nn.functional.l1_loss(predictions["trajectory"], targets["trajectory"])
 
-    def get_optimizers(self) -> Optimizer | Dict[str, Optimizer | LRScheduler]:
+    def get_optimizers(self) -> Union[Optimizer, Dict[str, Union[Optimizer, LRScheduler]]]:
         return torch.optim.Adam(self._mlp.parameters(), lr=self._lr)
