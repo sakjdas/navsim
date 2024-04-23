@@ -16,3 +16,4 @@
 *.jpg
 *.pcd
 /download/
+/navsim/agents/MyPrivateAgents/
