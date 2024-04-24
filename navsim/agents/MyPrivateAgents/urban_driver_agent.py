@@ -24,10 +24,16 @@ class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
         return "ego_status_feature"
 
     def compute_features(self, agent_input: AgentInput) -> Dict[str, torch.Tensor]:
-        ego_statuses = agent_input.ego_statuses  # the ego state in the last 2 seconds with 2HZ
-        ego_pose_tensors = [torch.tensor(ego_status.ego_pose, dtype=torch.float32) for ego_status in ego_statuses]
-        ego_pose_tensor = torch.stack(ego_pose_tensors).view(-1)
-        return {"ego_status": ego_pose_tensor}
+        ego_ego_status_in_multiple_frames = []
+        for ego_status in agent_input.ego_statuses:
+            velocity = torch.tensor(ego_status.ego_velocity)
+            acceleration = torch.tensor(ego_status.ego_acceleration)
+            driving_command = torch.tensor(ego_status.driving_command)
+            ego_pose = torch.tensor(ego_status.ego_pose)
+            ego_status_feature = torch.cat([velocity, acceleration, driving_command], dim=-1)
+            ego_ego_status_in_multiple_frames.append(ego_status_feature)
+        ego_ego_status_in_multiple_frames_tensor = torch.stack(ego_ego_status_in_multiple_frames).view(-1)
+        return {"ego_status": ego_ego_status_in_multiple_frames_tensor}
 
 
 class TrajectoryTargetBuilder(AbstractTargetBuilder):
@@ -59,10 +65,15 @@ class UrbanDriverAgent(AbstractAgent):
         self._lr = lr
 
         self._mlp = torch.nn.Sequential(
-            torch.nn.Linear(config.n_input_frames * config.n_feature_dim,
-                            2 * config.n_feature_dim * self._trajectory_sampling.num_poses),
+            torch.nn.Linear(32,
+                            128),
             torch.nn.ReLU(),
-            torch.nn.Linear(2 * config.n_feature_dim * self._trajectory_sampling.num_poses,
+            torch.nn.Linear(128,
+                            256),
+            torch.nn.ReLU(),
+            torch.nn.Linear(256,
+                            128),
+            torch.nn.Linear(128,
                             self._trajectory_sampling.num_poses * config.n_output_dim),
         )
 
@@ -103,7 +114,7 @@ class UrbanDriverAgent(AbstractAgent):
         targets: Dict[str, torch.Tensor],
         predictions: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
-        return torch.nn.functional.l1_loss(predictions["trajectory"], targets["trajectory"])
+        return torch.nn.functional.mse_loss(predictions["trajectory"], targets["trajectory"])
 
     def get_optimizers(self) -> Union[Optimizer, Dict[str, Union[Optimizer, LRScheduler]]]:
         return torch.optim.Adam(self._mlp.parameters(), lr=self._lr)
