@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 CONFIG_PATH = "config/pdm_scoring"
 CONFIG_NAME = "default_run_pdm_score"
 
+
 @hydra.main(config_path=CONFIG_PATH, config_name=CONFIG_NAME)
 def main(cfg: DictConfig) -> None:
     build_logger(cfg)
@@ -88,6 +89,7 @@ def main(cfg: DictConfig) -> None:
             Final average score of valid results: {pdm_score_df['score'].mean()}.
             Results are stored in: {save_path / f"{timestamp}.csv"}.
     """)
+
 
 def run_pdm_score(args: List[Dict[str, Union[List[str], DictConfig]]]) -> List[Dict[str, Any]]:
     node_id = int(os.environ.get("NODE_RANK", 0))
@@ -149,6 +151,7 @@ def run_pdm_score(args: List[Dict[str, Union[List[str], DictConfig]]]) -> List[D
 
         pdm_results.append(score_row)
     return pdm_results
+
 
 if __name__ == "__main__":
     main()

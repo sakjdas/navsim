@@ -62,7 +62,7 @@ class UrbanDriverAgent(AbstractAgent):
         self._trajectory_sampling = trajectory_sampling
         self._checkpoint_path = checkpoint_path
         self._lr = config.lr
-        self.my_model = MyModel.GRU()
+        self.my_model = MyModel.GRU().to(device=config.device)
 
     def name(self) -> str:
         """Inherited, see superclass."""
@@ -71,13 +71,14 @@ class UrbanDriverAgent(AbstractAgent):
 
     def initialize(self) -> None:
         """Inherited, see superclass."""
-        # if torch.cuda.is_available():
-        #     state_dict: Dict[str, Any] = torch.load(self._checkpoint_path)["state_dict"]
-        # else:
-        #     state_dict: Dict[str, Any] = torch.load(
-        #         self._checkpoint_path, map_location=torch.device("cpu")
-        #     )["state_dict"]
-        # self.load_state_dict({k.replace("agent.", ""): v for k, v in state_dict.items()})
+        if torch.cuda.is_available():
+            state_dict: Dict[str, Any] = torch.load(self._checkpoint_path)
+        else:
+            state_dict: Dict[str, Any] = torch.load(
+                self._checkpoint_path, map_location=torch.device("cpu")
+            )
+        # print(state_dict)
+        self.load_state_dict({k.replace("agent.", ""): v for k, v in state_dict.items()})
 
     def get_sensor_config(self) -> SensorConfig:
         """Inherited, see superclass."""

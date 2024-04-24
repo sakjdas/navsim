@@ -1,5 +1,5 @@
 """1. General"""
-device = 'cuda'
+device = 'cpu'
 """2. Input"""
 # General
 n_input_frames = 4

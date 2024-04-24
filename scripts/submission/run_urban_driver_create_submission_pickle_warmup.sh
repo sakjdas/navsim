@@ -14,4 +14,5 @@ authors=$AUTHORS \
 email=$EMAIL \
 institution=$INSTITUTION \
 country=$COUNTRY \
-# agent.checkpoint_path=/home/hguo/e2eAD/endtoenddriving/train/Hao_Guo/best_model/model_FC_preprocessing.ckpt \
+agent.checkpoint_path=/home/hguo/e2eAD/navsim_workspace/exp/training_urban_driver_pytorch/2024.04.24.18.55.53/pt_models/model1.ckpt \
+
