@@ -11,6 +11,7 @@ from navsim.planning.training.abstract_feature_target_builder import (
     AbstractTargetBuilder,
 )
 from navsim.common.dataclasses import Scene
+import navsim.agents.MyPrivateAgents.config as config
 
 import torch
 
@@ -23,13 +24,10 @@ class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
         return "ego_status_feature"
 
     def compute_features(self, agent_input: AgentInput) -> Dict[str, torch.Tensor]:
-        ego_status = agent_input.ego_statuses[-1]
-        velocity = torch.tensor(ego_status.ego_velocity)
-        acceleration = torch.tensor(ego_status.ego_acceleration)
-        driving_command = torch.tensor(ego_status.driving_command)
-        ego_status_feature = torch.cat([velocity, acceleration, driving_command], dim=-1)
-
-        return {"ego_status": ego_status_feature}
+        ego_statuses = agent_input.ego_statuses  # the ego state in the last 2 seconds with 2HZ
+        ego_pose_tensors = [torch.tensor(ego_status.ego_pose, dtype=torch.float32) for ego_status in ego_statuses]
+        ego_pose_tensor = torch.stack(ego_pose_tensors).view(-1)
+        return {"ego_status": ego_pose_tensor}
 
 
 class TrajectoryTargetBuilder(AbstractTargetBuilder):
@@ -47,11 +45,10 @@ class TrajectoryTargetBuilder(AbstractTargetBuilder):
         return {"trajectory": torch.tensor(future_trajectory.poses)}
 
 
-class EgoStatusMLPAgent(AbstractAgent):
+class UrbanDriverAgent(AbstractAgent):
     def __init__(
         self,
         trajectory_sampling: TrajectorySampling,
-        hidden_layer_dim: int,
         lr: float,
         checkpoint_path: str = None,
     ):
@@ -62,13 +59,11 @@ class EgoStatusMLPAgent(AbstractAgent):
         self._lr = lr
 
         self._mlp = torch.nn.Sequential(
-            torch.nn.Linear(8, hidden_layer_dim),
+            torch.nn.Linear(config.n_input_frames * config.n_feature_dim,
+                            2 * config.n_feature_dim * self._trajectory_sampling.num_poses),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_layer_dim, hidden_layer_dim),
-            torch.nn.ReLU(),
-            torch.nn.Linear(hidden_layer_dim, hidden_layer_dim),
-            torch.nn.ReLU(),
-            torch.nn.Linear(hidden_layer_dim, self._trajectory_sampling.num_poses * 3),
+            torch.nn.Linear(2 * config.n_feature_dim * self._trajectory_sampling.num_poses,
+                            self._trajectory_sampling.num_poses * config.n_output_dim),
         )
 
     def name(self) -> str:
