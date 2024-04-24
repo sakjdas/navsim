@@ -13,6 +13,7 @@ from navsim.planning.training.abstract_feature_target_builder import (
 from navsim.common.dataclasses import Scene
 import navsim.agents.MyPrivateAgents.config as config
 import torch
+from navsim.agents.MyPrivateAgents.my_models import MyModel
 
 
 class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
@@ -60,18 +61,9 @@ class UrbanDriverAgent(AbstractAgent):
         super().__init__()
         self._trajectory_sampling = trajectory_sampling
         self._checkpoint_path = checkpoint_path
-
         self._lr = config.lr
-
-        self._mlp = torch.nn.Sequential(
-            torch.nn.Linear(44, 512),
-            torch.nn.ReLU(),
-            torch.nn.Linear(512, 512),
-            torch.nn.ReLU(),
-            torch.nn.Linear(512, 512),
-            torch.nn.ReLU(),
-            torch.nn.Linear(512, self._trajectory_sampling.num_poses * 3),
-        )
+        self.my_model = MyModel.MLP()
+        criterion = torch.nn.MSELoss()
 
     def name(self) -> str:
         """Inherited, see superclass."""
@@ -101,7 +93,7 @@ class UrbanDriverAgent(AbstractAgent):
         return [EgoStatusFeatureBuilder()]
 
     def forward(self, features: Dict[str, torch.Tensor]) -> Dict[str, torch.Tensor]:
-        poses: torch.Tensor = self._mlp(features["ego_status"])
+        poses: torch.Tensor = self.my_model(features["ego_status"].to(config.device))
         return {"trajectory": poses.reshape(-1, self._trajectory_sampling.num_poses, 3)}
 
     def compute_loss(
@@ -110,7 +102,7 @@ class UrbanDriverAgent(AbstractAgent):
         targets: Dict[str, torch.Tensor],
         predictions: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
-        return torch.nn.functional.mse_loss(predictions["trajectory"], targets["trajectory"])
+        return torch.nn.functional.l1_loss(predictions["trajectory"].to(config.device), targets["trajectory"].to(config.device))
 
     def get_optimizers(self) -> Union[Optimizer, Dict[str, Union[Optimizer, LRScheduler]]]:
-        return torch.optim.Adam(self._mlp.parameters(), lr=self._lr)
+        return torch.optim.Adam(self.my_model.parameters(), lr=self._lr)

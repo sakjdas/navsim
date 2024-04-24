@@ -58,7 +58,7 @@ def train_val(model, train_dataloader, val_dataloader, agent, cfg, device, early
         for i, batch in enumerate(train_dataloader):
 
             # Move input_data and target_labels to device
-            features, targets = batch[0].to(device), batch[1].to(device)
+            features, targets = batch
             # 1 Zero out gradients from last iteration
             optimizer.zero_grad()
             # 2 Perform forward pass
@@ -85,7 +85,7 @@ def train_val(model, train_dataloader, val_dataloader, agent, cfg, device, early
                 model.eval()
                 loss_val = 0.
                 for batch_val in val_dataloader:
-                    features, targets = batch_val[0].to(device), batch_val[1].to(device)
+                    features, targets = batch_val
                     with torch.no_grad():
                         prediction = model(features)
 
@@ -188,8 +188,8 @@ def main(cfg: DictConfig) -> None:
     agent: AbstractAgent = instantiate(cfg.agent)
 
     logger.info("Building pytorch Module")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info("Using device: ", device)
+    device = torch.device("cuda" if torch.cuda.is_available() and config.device == "cuda" else "cpu")
+    print("Using device: ", device)
     model = AgentPytorchModel(agent=agent).to(device)
     print(model)
 

@@ -1,5 +1,5 @@
 """1. General"""
-
+device = 'cuda'
 """2. Input"""
 # General
 n_input_frames = 4
@@ -19,7 +19,6 @@ hidden_size = 512
 n_layers = 2
 
 """4. Training & Evaluation"""
-device = 'cuda'
 batch_size = 512
 lr = 1e-4
 betas = (0.9, 0.999)
