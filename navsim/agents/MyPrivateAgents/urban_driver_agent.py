@@ -32,7 +32,7 @@ class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
             ego_pose = torch.tensor(ego_status.ego_pose, dtype=torch.float)
             ego_status_feature = torch.cat([ego_pose, velocity, acceleration, driving_command], dim=-1)
             ego_multi_frames.append(ego_status_feature)
-        ego_tensor = torch.cat(ego_multi_frames)
+        ego_tensor = torch.stack(ego_multi_frames)
         return {"ego_status": ego_tensor}
 
 
@@ -62,8 +62,7 @@ class UrbanDriverAgent(AbstractAgent):
         self._trajectory_sampling = trajectory_sampling
         self._checkpoint_path = checkpoint_path
         self._lr = config.lr
-        self.my_model = MyModel.MLP()
-        criterion = torch.nn.MSELoss()
+        self.my_model = MyModel.GRU()
 
     def name(self) -> str:
         """Inherited, see superclass."""

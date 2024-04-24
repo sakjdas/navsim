@@ -14,6 +14,8 @@ n_output_frames = 8
 n_output_dim = 3
 
 """3. Model"""
+# FC
+hidden_dim_fc = 512
 # LSTM, GRU, RNN
 hidden_size = 512
 n_layers = 2
