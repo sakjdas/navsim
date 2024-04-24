@@ -11,7 +11,6 @@ from navsim.planning.training.abstract_feature_target_builder import (
     AbstractTargetBuilder,
 )
 from navsim.common.dataclasses import Scene
-import navsim.agents.MyPrivateAgents.config as config
 
 import torch
 
@@ -24,16 +23,16 @@ class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
         return "ego_status_feature"
 
     def compute_features(self, agent_input: AgentInput) -> Dict[str, torch.Tensor]:
-        ego_ego_status_in_multiple_frames = []
+        ego_multi_frames = []
         for ego_status in agent_input.ego_statuses:
             velocity = torch.tensor(ego_status.ego_velocity)
             acceleration = torch.tensor(ego_status.ego_acceleration)
             driving_command = torch.tensor(ego_status.driving_command)
-            ego_pose = torch.tensor(ego_status.ego_pose)
-            ego_status_feature = torch.cat([velocity, acceleration, driving_command], dim=-1)
-            ego_ego_status_in_multiple_frames.append(ego_status_feature)
-        ego_ego_status_in_multiple_frames_tensor = torch.stack(ego_ego_status_in_multiple_frames).view(-1)
-        return {"ego_status": ego_ego_status_in_multiple_frames_tensor}
+            ego_pose = torch.tensor(ego_status.ego_pose, dtype=torch.float)
+            ego_status_feature = torch.cat([ego_pose, velocity, acceleration, driving_command], dim=-1)
+            ego_multi_frames.append(ego_status_feature)
+        ego_tensor = torch.cat(ego_multi_frames)
+        return {"ego_status": ego_tensor}
 
 
 class TrajectoryTargetBuilder(AbstractTargetBuilder):
@@ -65,16 +64,13 @@ class UrbanDriverAgent(AbstractAgent):
         self._lr = lr
 
         self._mlp = torch.nn.Sequential(
-            torch.nn.Linear(32,
-                            128),
+            torch.nn.Linear(44, 512),
             torch.nn.ReLU(),
-            torch.nn.Linear(128,
-                            256),
+            torch.nn.Linear(512, 512),
             torch.nn.ReLU(),
-            torch.nn.Linear(256,
-                            128),
-            torch.nn.Linear(128,
-                            self._trajectory_sampling.num_poses * config.n_output_dim),
+            torch.nn.Linear(512, 512),
+            torch.nn.ReLU(),
+            torch.nn.Linear(512, self._trajectory_sampling.num_poses * 3),
         )
 
     def name(self) -> str:
@@ -84,13 +80,13 @@ class UrbanDriverAgent(AbstractAgent):
 
     def initialize(self) -> None:
         """Inherited, see superclass."""
-        if torch.cuda.is_available():
-            state_dict: Dict[str, Any] = torch.load(self._checkpoint_path)["state_dict"]
-        else:
-            state_dict: Dict[str, Any] = torch.load(
-                self._checkpoint_path, map_location=torch.device("cpu")
-            )["state_dict"]
-        self.load_state_dict({k.replace("agent.", ""): v for k, v in state_dict.items()})
+        # if torch.cuda.is_available():
+        #     state_dict: Dict[str, Any] = torch.load(self._checkpoint_path)["state_dict"]
+        # else:
+        #     state_dict: Dict[str, Any] = torch.load(
+        #         self._checkpoint_path, map_location=torch.device("cpu")
+        #     )["state_dict"]
+        # self.load_state_dict({k.replace("agent.", ""): v for k, v in state_dict.items()})
 
     def get_sensor_config(self) -> SensorConfig:
         """Inherited, see superclass."""
@@ -114,7 +110,7 @@ class UrbanDriverAgent(AbstractAgent):
         targets: Dict[str, torch.Tensor],
         predictions: Dict[str, torch.Tensor],
     ) -> torch.Tensor:
-        return torch.nn.functional.mse_loss(predictions["trajectory"], targets["trajectory"])
+        return torch.nn.functional.l1_loss(predictions["trajectory"], targets["trajectory"])
 
     def get_optimizers(self) -> Union[Optimizer, Dict[str, Union[Optimizer, LRScheduler]]]:
         return torch.optim.Adam(self._mlp.parameters(), lr=self._lr)
