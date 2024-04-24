@@ -17,7 +17,7 @@ import torch
 
 class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
     def __init__(self):
-        pass
+        super().__init__()
 
     def get_unique_name(self) -> str:
         return "ego_status_feature"
@@ -34,6 +34,7 @@ class EgoStatusFeatureBuilder(AbstractFeatureBuilder):
 
 class TrajectoryTargetBuilder(AbstractTargetBuilder):
     def __init__(self, trajectory_sampling: TrajectorySampling):
+        super().__init__()
         self._trajectory_sampling = trajectory_sampling
 
     def get_unique_name(self) -> str:

@@ -235,3 +235,4 @@ class Dataset(torch.utils.data.Dataset):
                 targets.update(builder.compute_targets(scene))
 
         return (features, targets)
+

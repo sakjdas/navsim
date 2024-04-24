@@ -16,12 +16,14 @@ def filter_scenes(data_path: Path, scene_filter: SceneFilter) -> Dict[str, List[
     def split_list(input_list: List[Any], num_frames: int, frame_interval: int) -> List[List[Any]]:
         return [input_list[i : i + num_frames] for i in range(0, len(input_list), frame_interval)]
 
+    # 当前帧的token作为key,然后整个14帧作为value（例如0-13共14帧，第4帧的token表示当前的key）
     filtered_scenes: Dict[str, Scene] = {}
     stop_loading: bool = False
 
-    # filter logs
+    # filter logs， 为什么只有10个
     log_files = list(data_path.iterdir())
     if scene_filter.log_names is not None:
+        # 得到我们需要的pkl文件，对于val有10个
         log_files = [
             log_file
             for log_file in log_files
@@ -35,12 +37,12 @@ def filter_scenes(data_path: Path, scene_filter: SceneFilter) -> Dict[str, List[
         filter_tokens = False
 
     for log_pickle_path in tqdm(log_files, desc="Loading logs"):
-
+        # 加载一个pkl，例如一个pkl有500帧
         scene_dict_list = pickle.load(open(log_pickle_path, "rb"))
         for frame_list in split_list(
             scene_dict_list, scene_filter.num_frames, scene_filter.frame_interval
         ):
-            # Filter scenes which are too short
+            # Filter scenes which are too short，比如14,14,12,最后一个就比较短，就跳过了
             if len(frame_list) < scene_filter.num_frames:
                 continue
 
@@ -124,6 +126,7 @@ class SceneLoader:
             else:
                 tokens_per_logs.update({log_name: [token]})
         return tokens_per_logs
+
 
 class MetricCacheLoader:
 

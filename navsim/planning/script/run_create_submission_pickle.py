@@ -14,7 +14,6 @@ from navsim.agents.abstract_agent import AbstractAgent
 from navsim.common.dataclasses import Trajectory, SceneFilter
 from navsim.common.dataloader import SceneLoader
 
-
 logger = logging.getLogger(__name__)
 
 CONFIG_PATH = "config/pdm_scoring"
@@ -44,18 +43,19 @@ def main(cfg: DictConfig) -> None:
         "country / region": cfg.country,
         "predictions": output,
     }
-    
+
     # pickle and save dict
     filename = os.path.join(save_path, "submission.pkl")
     with open(filename, 'wb') as file:
         pickle.dump(submission, file)
     logger.info(f"Your submission filed was saved to {filename}")
 
+
 def run_test_evaluation(
-    agent: AbstractAgent,
-    scene_filter: SceneFilter,
-    data_path: Path,
-    sensor_blobs_path: Path,
+        agent: AbstractAgent,
+        scene_filter: SceneFilter,
+        data_path: Path,
+        sensor_blobs_path: Path,
 ) -> Dict[str, Trajectory]:
     """
     Function to create the output file for evaluation of an agent on the testserver
@@ -63,14 +63,14 @@ def run_test_evaluation(
     :param data_path: pathlib path to navsim logs
     :param sensor_blobs_path: pathlib path to sensor blobs
     :param save_path: pathlib path to folder where scores are stored as .csv
-    """    
+    """
     if agent.requires_scene:
         raise ValueError(
-        """
+            """
             In evaluation, no access to the annotated scene is provided, but only to the AgentInput. 
             Thus, agent.requires_scene has to be False for the agent that is to be evaluated.
         """
-    ) 
+        )
     logger.info("Building Agent Input Loader")
     input_loader = SceneLoader(
         data_path=data_path,
@@ -91,6 +91,7 @@ def run_test_evaluation(
             traceback.print_exc()
 
     return output
+
 
 if __name__ == "__main__":
     main()
