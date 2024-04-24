@@ -1,5 +1,6 @@
 """1. General"""
-device = 'cpu'
+# run evaluation/submission的时候需要改回cpu，训练的时候使用GPU
+device = 'cuda'
 """2. Input"""
 # General
 n_input_frames = 4

@@ -7,7 +7,6 @@ from nuplan.planning.script.builders.logging_builder import build_logger
 from navsim.planning.metric_caching.caching import cache_data
 from navsim.planning.script.builders.worker_pool_builder import build_worker
 
-
 logger = logging.getLogger(__name__)
 
 CONFIG_PATH = "config/metric_caching"
@@ -22,7 +21,7 @@ def main(cfg: DictConfig) -> None:
     """
     # Configure logger
     build_logger(cfg)
-    
+
     # Build worker
     worker = build_worker(cfg)
 
@@ -31,6 +30,7 @@ def main(cfg: DictConfig) -> None:
     if cfg.worker == "ray_distributed" and cfg.worker.use_distributed:
         raise AssertionError("ray in distributed mode will not work with this job")
     cache_data(cfg=cfg, worker=worker)
+
 
 if __name__ == "__main__":
     main()
